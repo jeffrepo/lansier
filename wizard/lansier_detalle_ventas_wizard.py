@@ -18,7 +18,7 @@ class LansierSalesDataillWizard(models.TransientModel):
     def print_report(self):
         for w in self:
             dict = {}
-            invoice_ids = self.env['account.move'].search([('date','>=', w.date_from),('date','<=', w.date_to)])
+            invoice_ids = self.env['account.move'].search([('invoice_date','>=', w.date_from),('invoice_date','<=', w.date_to),('move_type','=','out_invoice'),('state','=','posted')])
 
             f = io.BytesIO()
             workbook = xlsxwriter.Workbook(f)
@@ -57,36 +57,37 @@ class LansierSalesDataillWizard(models.TransientModel):
                             if line.sale_line_ids:
                                 move_id = self.env["stock.move"].search([("sale_line_id","=", line.sale_line_ids.id)])
                                 if move_id and move_id.lot_ids:
-                                    lot = move_id.lot_ids.name
-                                    expiration_date = str(move_id.lot_ids.expiration_date)
+                                    lot = move_id.lot_ids[0].name
+                                    expiration_date = str(move_id.lot_ids[0].expiration_date)
                             price_total_discount = 0
                             if line.discount > 0:
                                 price_total_discount = line.price_total / line.quantity
-                            price_usd = linea.price_subtotal if line.currency_id.id != line.company_id.currency_id.id else 0
-                            credit = linea.move_id.invoice_payment_term_id.line_ids.nb_days if linea.move_id.invoice_payment_term_id else 0
+                            price_usd = line.price_subtotal if line.currency_id.id != line.company_id.currency_id.id else 0
+                            credit = line.move_id.invoice_payment_term_id.line_ids.nb_days if line.move_id.invoice_payment_term_id else 0
                             medic = ''
                             worksheet.write(row, 0, str(line.invoice_date))
-                            worksheet.write(row, 0, 'FACT')
-                            worksheet.write(row, 0, line.move_id.fel_numero)
-                            worksheet.write(row, 0, line.move_id.partner_id.name)
-                            worksheet.write(row, 0, line.move_id.partner_id.vat)
-                            worksheet.write(row, 0, line.move_id.partner_id.x_studio_direccion_entrega)
-                            worksheet.write(row, 0, line.move_id.partner_id.x_studio_nombre_comercial)
-                            worksheet.write(row, 0, line.product_id.categ_id.name)
-                            worksheet.write(row, 0, line.move_id.partner_id.ref)
-                            worksheet.write(row, 0, line.product_id.name)
-                            worksheet.write(row, 0, lot)
-                            worksheet.write(row, 0, expiration_date)
-                            worksheet.write(row, 0, line.quantity)
-                            worksheet.write(row, 0, line.price_unit)
-                            worksheet.write(row, 0, line.discount)
-                            worksheet.write(row, 0, price_total_discount)
-                            worksheet.write(row, 0, line.price_total)
-                            worksheet.write(row, 0, line.amount_currency / 1.12)
-                            worksheet.write(row, 0, price_usd)
-                            worksheet.write(row, 0, 'D')
-                            worksheet.write(row, 0, credit)
-                            worksheet.write(row, 0, medic)
+                            worksheet.write(row, 1, 'FACT')
+                            worksheet.write(row, 2, line.move_id.fel_numero)
+                            worksheet.write(row, 3, line.move_id.partner_id.name)
+                            worksheet.write(row, 4, line.move_id.partner_id.vat)
+                            worksheet.write(row, 5, line.move_id.partner_id.x_studio_direccion_de_entrega)
+                            worksheet.write(row, 6, line.move_id.partner_id.x_studio_nombre_comercial)
+                            worksheet.write(row, 7, line.product_id.categ_id.name)
+                            worksheet.write(row, 8, line.move_id.partner_id.ref)
+                            worksheet.write(row, 9, line.product_id.name)
+                            worksheet.write(row, 10, lot)
+                            worksheet.write(row, 11, expiration_date)
+                            worksheet.write(row, 12, line.quantity)
+                            worksheet.write(row, 13, line.price_unit)
+                            worksheet.write(row, 14, line.discount)
+                            worksheet.write(row, 15, price_total_discount)
+                            worksheet.write(row, 16, line.price_total)
+                            worksheet.write(row, 17, (line.amount_currency / 1.12)*-1)
+                            worksheet.write(row, 18, price_usd)
+                            worksheet.write(row, 19, 'D')
+                            worksheet.write(row, 20, credit)
+                            worksheet.write(row, 21, medic)
+                            row += 1
                             
             workbook.close()
             data = base64.b64encode(f.getvalue())

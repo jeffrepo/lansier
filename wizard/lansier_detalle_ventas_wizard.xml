@@ -13,6 +13,10 @@
                             <field name="date_from"/>
                             <field name="date_to"/>
                         </group>
+                        <group>
+                            <field name="name" invisible="1"/>
+                            <field name="archivo" readonly="1" filename="name"/>
+                        </group>
                     </group>
                     <footer>
                         <button name="print_report" string="Create Xlsx" type="object" class="oe_highlight"/>
@@ -22,8 +26,16 @@
             </field>
         </record>
 
-        <act_window id="window_lansier_sale_detail" name="Sale detail" res_model="lansier.sale.detail.wizard" binding_model="account.account" view_mode="form" target="new"/>
-        <menuitem action="window_lansier_sale_detail" id="menu_lansier_sale_detail" parent="account.menu_finance_reports"/>
+        <record id="window_lansier_sale_detail" model="ir.actions.act_window">
+            <field name="name">Sale detail</field>
+            <field name="res_model">lansier.sale.detail.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="lansier_sale_detail_wizard"/>
+            <field name="target">new</field>
+            <field name="binding_model_id" ref="account.model_account_account"/>
+        </record>
+        
+        <menuitem action="lansier.window_lansier_sale_detail" id="menu_lansier_sale_detail" parent="account.menu_finance_reports"/>
 
     </data>
 </odoo>
