@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="lansier_sale_detail_wizard" model="ir.ui.view">
+            <field name="name">lansier.sale.detail.wizard</field>
+            <field name="model">lansier.sale.detail.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Enter dates">
+                    <group>
+                        <group>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                    </group>
+                    <footer>
+                        <button name="print_report" string="Create Xlsx" type="object" class="oe_highlight"/>
+                        <button special="cancel" string="Cancel" class="oe_link"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <act_window id="window_lansier_sale_detail" name="Sale detail" res_model="lansier.sale.detail.wizard" binding_model="account.account" view_mode="form" target="new"/>
+        <menuitem action="window_lansier_sale_detail" id="menu_lansier_sale_detail" parent="account.menu_finance_reports"/>
+
+    </data>
+</odoo>
