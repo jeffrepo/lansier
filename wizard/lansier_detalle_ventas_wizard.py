@@ -18,34 +18,37 @@ class LansierSalesDataillWizard(models.TransientModel):
     def print_report(self):
         for w in self:
             dict = {}
-            invoice_ids = self.env['account.move'].search([('invoice_date','>=', w.date_from),('invoice_date','<=', w.date_to),('move_type','=','out_invoice'),('state','=','posted')])
-
+            invoice_ids = self.env['account.move'].search([('invoice_date','>=', w.date_from),('invoice_date','<=', w.date_to),('move_type','in',['out_invoice','out_refund']),('state','=','posted')])
+            logging.warning(invoice_ids)
+            
             f = io.BytesIO()
             workbook = xlsxwriter.Workbook(f)
             worksheet = workbook.add_worksheet('Sale detail')
-
-            worksheet.write(0, 0, 'FECHA VENTA')
-            worksheet.write(0, 1, 'FACT')
-            worksheet.write(0, 2, 'NO. FACT')
-            worksheet.write(0, 3, 'NOMBRE DEL CLIENTE')
-            worksheet.write(0, 4, 'NIT')
-            worksheet.write(0, 5, 'DIRECCION DE ENTREGA')
-            worksheet.write(0, 6, 'NOMBRE COMERCIAL')
-            worksheet.write(0, 7, 'CATEG.')
-            worksheet.write(0, 8, 'CODIGO')
-            worksheet.write(0, 9, 'PRODUCTO')
-            worksheet.write(0, 10, 'LOTE')
-            worksheet.write(0, 11, 'FECHA VENCIMIENTO')
-            worksheet.write(0, 12, 'QTY')
-            worksheet.write(0, 13, 'PRECIO  UNITARIO Q.')
-            worksheet.write(0, 14, 'DSCTO')
-            worksheet.write(0, 15, 'PRECIO CON DESCUENTO')
-            worksheet.write(0, 16, 'TOTAL X LINEA')
-            worksheet.write(0, 17, 'TOTAL X LINEA SIN IVA QTZ')
-            worksheet.write(0, 18, 'TOTAL X LINEA SIN IVA USD $')
-            worksheet.write(0, 19, 'N/E')
-            worksheet.write(0, 20, 'CREDITO')
-            worksheet.write(0, 21, 'VISITADOR MEDICO')
+            f1=workbook.add_format()
+            f1.set_bold(True)
+            worksheet.write(0, 0, 'FECHA VENTA', f1)
+            worksheet.write(0, 1, 'FACT', f1)
+            worksheet.write(0, 2, 'NO. FACT', f1)
+            worksheet.write(0, 3, 'NOMBRE DEL CLIENTE', f1)
+            worksheet.write(0, 4, 'NIT', f1)
+            worksheet.write(0, 5, 'DIRECCION DE ENTREGA', f1)
+            worksheet.write(0, 6, 'NOMBRE COMERCIAL', f1)
+            worksheet.write(0, 7, 'CATEG.', f1)
+            worksheet.write(0, 8, 'CODIGO', f1)
+            worksheet.write(0, 9, 'PRODUCTO', f1)
+            worksheet.write(0, 10, 'LOTE', f1)
+            worksheet.write(0, 11, 'FECHA VENCIMIENTO', f1)
+            worksheet.write(0, 12, 'QTY', f1)
+            worksheet.write(0, 13, 'PRECIO  UNITARIO Q.', f1)
+            worksheet.write(0, 14, 'DSCTO', f1)
+            worksheet.write(0, 15, 'PRECIO CON DESCUENTO', f1)
+            worksheet.write(0, 16, 'TOTAL X LINEA', f1)
+            worksheet.write(0, 17, 'TOTAL X LINEA SIN IVA QTZ', f1)
+            worksheet.write(0, 18, 'TOTAL X LINEA SIN IVA USD $', f1)
+            worksheet.write(0, 19, 'N/E', f1)
+            worksheet.write(0, 20, 'CREDITO', f1)
+            worksheet.write(0, 21, 'VISITADOR MEDICO', f1)
+            worksheet.write(0, 22, 'UNIDADES BONIFICADAS', f1)
 
             row = 1
             if len(invoice_ids) > 0:
@@ -62,11 +65,14 @@ class LansierSalesDataillWizard(models.TransientModel):
                             price_total_discount = 0
                             if line.discount > 0:
                                 price_total_discount = line.price_total / line.quantity
-                            price_usd = line.price_subtotal if line.currency_id.id != line.company_id.currency_id.id else 0
+                            #Este se utilzaba en al linea 91    
+                            #price_usd = line.price_subtotal if line.currency_id.id != line.company_id.currency_id.id else 0
                             credit = line.move_id.invoice_payment_term_id.line_ids.nb_days if line.move_id.invoice_payment_term_id else 0
-                            medic = ''
+                            medic = line.move_id.partner_id.x_studio_vendedor_lansier if line.move_id.partner_id.x_studio_vendedor_lansier else ''
+                            unidades_bonificadas = ((line.discount / 100) * line.quantity) if line.discount > 0 else 0
+                            cantidad = line.quantity*-1 if line.move_id.move_type == 'out_refund' else line.quantity
                             worksheet.write(row, 0, str(line.invoice_date))
-                            worksheet.write(row, 1, 'FACT')
+                            worksheet.write(row, 1, line.move_id.journal_id.tipo_factura)
                             worksheet.write(row, 2, line.move_id.fel_numero)
                             worksheet.write(row, 3, line.move_id.partner_id.name)
                             worksheet.write(row, 4, line.move_id.partner_id.vat)
@@ -77,16 +83,17 @@ class LansierSalesDataillWizard(models.TransientModel):
                             worksheet.write(row, 9, line.product_id.name)
                             worksheet.write(row, 10, lot)
                             worksheet.write(row, 11, expiration_date)
-                            worksheet.write(row, 12, line.quantity)
+                            worksheet.write(row, 12, cantidad)
                             worksheet.write(row, 13, line.price_unit)
                             worksheet.write(row, 14, line.discount)
                             worksheet.write(row, 15, price_total_discount)
                             worksheet.write(row, 16, line.price_total)
                             worksheet.write(row, 17, (line.amount_currency / 1.12)*-1)
-                            worksheet.write(row, 18, price_usd)
+                            worksheet.write(row, 18, ((line.amount_currency / 1.12)*-1)/7.8  )
                             worksheet.write(row, 19, 'D')
                             worksheet.write(row, 20, credit)
                             worksheet.write(row, 21, medic)
+                            worksheet.write(row, 22, int(unidades_bonificadas))
                             row += 1
                             
             workbook.close()
