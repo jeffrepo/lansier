@@ -5,6 +5,7 @@ import xlsxwriter
 import base64
 import io
 import logging
+import math
 
 class LansierSalesDataillWizard(models.TransientModel):
 
@@ -88,12 +89,12 @@ class LansierSalesDataillWizard(models.TransientModel):
                             worksheet.write(row, 14, line.discount)
                             worksheet.write(row, 15, price_total_discount)
                             worksheet.write(row, 16, line.price_total)
-                            worksheet.write(row, 17, (line.amount_currency / 1.12)*-1)
-                            worksheet.write(row, 18, ((line.amount_currency / 1.12)*-1)/7.8  )
+                            worksheet.write(row, 17, (line.price_total / 1.12))
+                            worksheet.write(row, 18, ((line.price_total / 1.12)*-1)/7.8  )
                             worksheet.write(row, 19, 'D')
                             worksheet.write(row, 20, credit)
                             worksheet.write(row, 21, medic)
-                            worksheet.write(row, 22, int(unidades_bonificadas))
+                            worksheet.write(row, 22, math.ceil(unidades_bonificadas)),
                             row += 1
                             
             workbook.close()
@@ -108,3 +109,4 @@ class LansierSalesDataillWizard(models.TransientModel):
             'type': 'ir.actions.act_window',
             'target': 'new',
         }
+
