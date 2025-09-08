@@ -90,7 +90,8 @@ class LansierSalesDataillWizard(models.TransientModel):
                             worksheet.write(row, 15, price_total_discount)
                             worksheet.write(row, 16, line.price_total)
                             worksheet.write(row, 17, (line.price_total / 1.12))
-                            worksheet.write(row, 18, ((line.price_total / 1.12)*-1)/7.8  )
+                            linea_sin_iva_usd = (((line.price_total / 1.12)*-1)/7.8 ) * -1
+                            worksheet.write(row, 18, linea_sin_iva_usd)
                             worksheet.write(row, 19, 'D')
                             worksheet.write(row, 20, credit)
                             worksheet.write(row, 21, medic)
@@ -109,4 +110,5 @@ class LansierSalesDataillWizard(models.TransientModel):
             'type': 'ir.actions.act_window',
             'target': 'new',
         }
+
 
